@@ -1,0 +1,2 @@
+import Link from "next/link"; import { Bookmark, ArrowRight } from "lucide-react";
+export default function SavedPage() { return <main className="placeholder-page"><Bookmark/><span className="kicker">Your shortlist</span><h1>Keep the signal close.</h1><p>Saved startups, roles, and searches will live here when persistence is added in the next product increment.</p><Link href="/search">Build your shortlist <ArrowRight size={16}/></Link></main>; }

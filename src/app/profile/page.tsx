@@ -1,0 +1,2 @@
+import Link from "next/link"; import { UserRound, ArrowRight } from "lucide-react";
+export default function ProfilePage() { return <main className="placeholder-page"><UserRound/><span className="kicker">Candidate profile</span><h1>Arjun, meet your opportunity graph.</h1><p>The demo search currently uses your Java backend profile. Profile editing and resume review arrive in the identity milestone.</p><Link href="/search">See profile matches <ArrowRight size={16}/></Link></main>; }

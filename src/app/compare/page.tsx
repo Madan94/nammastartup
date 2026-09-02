@@ -1,0 +1,2 @@
+import Link from "next/link"; import { Scale, ArrowRight } from "lucide-react";
+export default function ComparePage() { return <main className="placeholder-page"><Scale/><span className="kicker">Decision workspace</span><h1>Make the trade-offs visible.</h1><p>The comparison matrix is the next vertical-slice milestone. Select companies from search results as that workflow comes online.</p><Link href="/search">Find companies to compare <ArrowRight size={16}/></Link></main>; }
