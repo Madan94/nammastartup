@@ -8,8 +8,8 @@ const geist = Geist({ variable: "--font-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: `${productConfig.name} — Find your startup fit`,
-  description: "Evidence-backed startup and job discovery for Bengaluru's builders.",
+  title: `${productConfig.name} | Namma Startup`,
+  description: "Explore real companies, careers, and startup news across Chennai. Browse the map and help grow the directory.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
