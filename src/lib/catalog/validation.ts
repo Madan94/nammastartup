@@ -1,0 +1,4 @@
+﻿import {z} from 'zod';
+export const publicUrl=z.string().trim().max(500).url().refine(value=>{try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password&&!u.port&&u.hostname.includes('.')&&!/^(localhost|127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(u.hostname)}catch{return false}},'Enter a public HTTPS website');
+export const submissionSchema=z.object({name:z.string().trim().min(2).max(100),website:publicUrl,description:z.string().trim().min(15).max(500),sector:z.string().trim().min(2).max(80),area:z.string().trim().min(2).max(80),address:z.string().trim().min(10).max(300),email:z.string().trim().email().max(200),careersUrl:z.union([publicUrl,z.literal('')]).optional(),consent:z.literal(true),websiteConfirm:z.string().max(0).optional()});
+export type CompanySubmission=z.infer<typeof submissionSchema>;

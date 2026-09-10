@@ -1,0 +1,2 @@
+﻿import {SubmissionForm} from '@/features/submissions/submission-form';
+export default function SubmitPage(){return <main id="main-content" className="page-wrap narrow-page"><span className="eyebrow">Built by the community</span><h1>Put your company on the map.</h1><p className="lead">Know a company building in Chennai? Share its official details. Listings are free, and every submission is reviewed before publication.</p><SubmissionForm/></main>}
