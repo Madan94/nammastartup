@@ -1,4 +1,4 @@
-﻿const allowedSources = new Set([
+const allowedSources = new Set([
   'https://agnikul.in/careers/',
   'https://agnikul.in/feed/',
   'https://www.eplane.ai/feed/',
@@ -70,7 +70,9 @@ export async function fetchSource(url: string) {
     const policy = await limitedText(robots, 100000);
     if (!robotsAllows(policy, new URL(url).pathname))
       throw new Error('Source disallows automated access');
-    const delay = Math.min(20, Number(policy.match(/crawl-delay:\s*([\d.]+)/i)?.[1] || 0));
+    const delay = Number(policy.match(/crawl-delay:\s*([\d.]+)/i)?.[1] || 0);
+    if (!Number.isFinite(delay) || delay > 20)
+      throw new Error('Source requires a slower crawl; automatic refresh deferred');
     if (delay) await new Promise((resolve) => setTimeout(resolve, delay * 1000));
   }
   const response = await fetch(url, {

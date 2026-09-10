@@ -62,6 +62,13 @@ try {
   const catalog = await (await get('/api/companies')).json();
   assert.ok(catalog.count >= 8);
   const company = catalog.companies[0];
+  const home = await (await get('/')).text();
+  assert.match(home, /property="og:image" content="https?:[^" ]+\/og.png"/);
+  for (const item of catalog.companies.slice(0, 2)) {
+    const html = await (await get('/company/' + item.slug)).text();
+    assert.ok(html.includes(item.name + ' | Chennai Startup Map'));
+    assert.ok(html.includes('/company/' + item.slug));
+  }
   for (const path of [
     '/',
     '/jobs',
@@ -101,6 +108,18 @@ try {
   };
   const created = await (await post('/api/submissions', submission, 201)).json();
   await post('/api/submissions', submission, 409);
+  const concurrentSubmission = { ...submission, website: 'https://concurrent-company.org' };
+  const concurrent = await Promise.all(
+    [0, 1].map(() =>
+      fetch(base + '/api/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: base },
+        body: JSON.stringify(concurrentSubmission),
+      }),
+    ),
+  );
+  assert.deepEqual(concurrent.map((response) => response.status).sort(), [201, 409]);
+  checks += 2;
   assert.equal((await (await get('/api/companies?q=Integration+Test')).json()).count, 0);
   const record = {
     ...company,
@@ -144,6 +163,16 @@ try {
       201,
     )
   ).json();
+  await post(
+    '/api/admin/review',
+    {
+      id: correction.id,
+      action: 'approve',
+      company,
+      verified: true,
+    },
+    400,
+  );
   await post('/api/admin/review', {
     id: correction.id,
     action: 'approve',

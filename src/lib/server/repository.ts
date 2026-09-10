@@ -1,4 +1,4 @@
-﻿import { openStore } from '@/lib/server/platform';
+import { openStore } from '@/lib/server/platform';
 import { schemaStatements } from '../../../db/migrations';
 import { verifiedCompanies } from '@/data/chennai';
 import type { Company, JobListing, NewsItem } from '@/lib/catalog/types';
@@ -69,4 +69,14 @@ export async function listSyncs() {
     error: string | null;
     item_count: number;
   }>('SELECT * FROM sync_runs ORDER BY source');
+}
+export async function sourceFreshness(category: 'jobs' | 'news') {
+  const sources = (await listSyncs()).filter((s) => s.source.endsWith('-' + category));
+  const dates = sources.map((s) => s.success_at).filter((s): s is string => !!s);
+  const now = Date.now();
+  return {
+    latest: dates.sort().at(-1),
+    stale: dates.some((date) => now - Date.parse(date) > 48 * 60 * 60 * 1000),
+    failed: sources.some((source) => source.error),
+  };
 }

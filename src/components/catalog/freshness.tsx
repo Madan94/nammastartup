@@ -1,9 +1,6 @@
-﻿import { listSyncs } from '@/lib/server/repository';
+import { sourceFreshness } from '@/lib/server/repository';
 export async function Freshness({ category }: { category: 'jobs' | 'news' }) {
-  const sources = (await listSyncs()).filter((s) => s.source.endsWith('-' + category));
-  const dates = sources.map((s) => s.success_at).filter((s): s is string => !!s);
-  const latest = dates.sort().at(-1);
-  const stale = dates.some((d) => Date.now() - Date.parse(d) > 48 * 60 * 60 * 1000);
+  const { latest, stale, failed } = await sourceFreshness(category);
   return (
     <p className="freshness" role="status">
       {latest
@@ -11,7 +8,7 @@ export async function Freshness({ category }: { category: 'jobs' | 'news' }) {
           new Date(latest).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) +
           ' IST.'
         : 'Awaiting the first successful source check.'}{' '}
-      {sources.some((s) => s.error)
+      {failed
         ? 'Some sources could not be refreshed. Previously checked records are retained.'
         : stale
           ? 'Some source records are more than two days old.'

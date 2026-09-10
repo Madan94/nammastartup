@@ -1,4 +1,4 @@
-﻿import { database } from './repository';
+import { database } from './repository';
 import type { Company } from '@/lib/catalog/types';
 export interface SubmissionRow {
   id: string;
@@ -49,6 +49,10 @@ export async function reviewSubmission(
   }
   if (action === 'approve' && submission.kind === 'correction') {
     if (!company) throw new Error('COMPANY_REQUIRED');
+    const target = JSON.parse(submission.payload).companySlug;
+    if (target !== company.slug) throw new Error('CORRECTION_TARGET');
+    const existing = await db.all('SELECT slug FROM companies WHERE slug=?', [target]);
+    if (!existing.length) throw new Error('NOT_FOUND');
     statements.push({
       sql: "UPDATE companies SET name=?,sector=?,area=?,kind=?,record=?,updated_at=? WHERE slug=? AND EXISTS(SELECT 1 FROM submissions WHERE id=? AND status='pending')",
       params: [
@@ -63,16 +67,19 @@ export async function reviewSubmission(
       ],
     });
   }
+  const auditId = crypto.randomUUID();
   statements.push(
+    {
+      sql: "INSERT INTO audit (id,action,record_id,created_at) SELECT ?,?,?,? WHERE EXISTS (SELECT 1 FROM submissions WHERE id=? AND status='pending')",
+      params: [auditId, action, id, now, id],
+    },
     {
       sql: "UPDATE submissions SET status=?,note=?,updated_at=? WHERE id=? AND status='pending'",
       params: [action === 'approve' ? 'approved' : 'rejected', note, now, id],
     },
-    {
-      sql: 'INSERT INTO audit (id,action,record_id,created_at) VALUES (?,?,?,?)',
-      params: [crypto.randomUUID(), action, id, now],
-    },
   );
   await db.batch(statements);
+  if (!(await db.all('SELECT id FROM audit WHERE id=?', [auditId])).length)
+    throw new Error('ALREADY_REVIEWED');
   return { status: action === 'approve' ? 'approved' : 'rejected' };
 }
