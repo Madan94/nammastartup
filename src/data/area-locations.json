@@ -1,0 +1,37 @@
+{
+  "Taramani": {
+    "latitude": 12.9849067,
+    "longitude": 80.2404069,
+    "label": "Taramani, Zone 13 Adyar, Chennai Corporation, Chennai, Tamil Nadu, 600036, India",
+    "sourceUrl": "https://www.openstreetmap.org/node/325198962",
+    "checkedAt": "2026-09-10T03:49:37.593Z"
+  },
+  "Alwarpet": {
+    "latitude": 13.0338602,
+    "longitude": 80.2545491,
+    "label": "Alwarpet, Zone 9 Teynampet, Chennai Corporation, Chennai, Tamil Nadu, 600018, India",
+    "sourceUrl": "https://www.openstreetmap.org/node/243053506",
+    "checkedAt": "2026-09-10T03:49:39.170Z"
+  },
+  "Puzhuthivakkam": {
+    "latitude": 12.9691428,
+    "longitude": 80.2062626,
+    "label": "Puzhuthivakkam, Zone 14 Perungudi, Chennai Corporation, Sholinganallur, Chennai, Tamil Nadu, 600091, India",
+    "sourceUrl": "https://www.openstreetmap.org/node/280518793",
+    "checkedAt": "2026-09-10T03:49:42.330Z"
+  },
+  "Mugalivakkam": {
+    "latitude": 13.0205798,
+    "longitude": 80.1685163,
+    "label": "Mugalivakkam, Zone 12 Alandur, Chennai Corporation, Alandur, Chennai, Tamil Nadu, 600125, India",
+    "sourceUrl": "https://www.openstreetmap.org/node/294073614",
+    "checkedAt": "2026-09-10T03:49:44.013Z"
+  },
+  "IIT Madras": {
+    "latitude": 12.9941561,
+    "longitude": 80.2366826,
+    "label": "Indian Institute of Technology - Madras, Adayar, Ward 174, Zone 13 Adyar, Chennai Corporation, Chennai, Tamil Nadu, 600036, India",
+    "sourceUrl": "https://www.openstreetmap.org/way/24730814",
+    "checkedAt": "2026-09-10T03:49:46.460Z"
+  }
+}
