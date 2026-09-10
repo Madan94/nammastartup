@@ -12,3 +12,4 @@ dist/
 .dev.vars
 .env.*.local
 next-env.d.ts
+.vinext/

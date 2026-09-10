@@ -73,10 +73,11 @@ corepack pnpm build
 corepack pnpm typecheck
 corepack pnpm test:smoke
 corepack pnpm build:sites
+node scripts/smoke.mjs --worker
 corepack pnpm audit --prod
 ```
 
-The HTTP smoke test starts a production server on port 3012 with an isolated temporary database and random admin key. Fictional fixtures exist only in that test database. `typecheck` regenerates route types because Next and Vinext emit different declarations. CI runs the application checks. See [verification evidence](docs/VERIFICATION.md).
+The HTTP smoke test starts a production server on port 3012 with an isolated temporary database and random admin key. The `--worker` variant runs the same checks against local Workers/D1 on port 3013 after the Sites build. Fictional fixtures exist only in these test databases. `typecheck` regenerates route types because Next and Vinext emit different declarations. CI runs these checks. See [verification evidence](docs/VERIFICATION.md).
 
 ## Operations and scope
 

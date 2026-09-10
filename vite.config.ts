@@ -1,13 +1,19 @@
 ﻿import { sites } from '@openai/sites-vite-plugin';
 import vinext from 'vinext';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { fileURLToPath } from 'node:url';
-import hosting from './.openai/hosting.json';
+import hosting from './.openai/hosting.json' with { type: 'json' };
 export default defineConfig(async () => {
   process.env.WRANGLER_WRITE_LOGS ??= 'false';
   process.env.WRANGLER_LOG_PATH ??= '.wrangler/logs';
   process.env.MINIFLARE_REGISTRY_PATH ??= '.wrangler/registry';
   const { cloudflare } = await import('@cloudflare/vite-plugin');
+  const workerPlatform = fileURLToPath(
+    new URL('./src/lib/server/platform-worker.ts', import.meta.url),
+  );
+  const nodePlatform = fileURLToPath(
+    new URL('./src/lib/server/platform.ts', import.meta.url),
+  ).replaceAll('\\', '/');
   return {
     resolve: {
       alias: [
@@ -20,6 +26,37 @@ export default defineConfig(async () => {
       ],
     },
     plugins: [
+      {
+        name: 'namma-d1-platform',
+        enforce: 'pre',
+        resolveId(source) {
+          const normalized = source.replaceAll('\\', '/');
+          if (
+            source === '@/lib/server/platform' ||
+            normalized === nodePlatform ||
+            normalized === nodePlatform.slice(0, -3)
+          )
+            return workerPlatform;
+        },
+        load(id) {
+          // Vinext can resolve TypeScript aliases before user aliases; handle the resolved file too.
+          const normalized = id.split('?')[0].replaceAll('\\', '/');
+          if (normalized.toLowerCase() === nodePlatform.toLowerCase())
+            return `export { openStore } from ${JSON.stringify(workerPlatform.replaceAll('\\', '/'))};`;
+        },
+        generateBundle(_options, bundle) {
+          for (const output of Object.values(bundle)) {
+            if (output.type !== 'chunk') continue;
+            for (const id of Object.keys(output.modules)) {
+              if (
+                id.replaceAll('\\', '/').toLowerCase() === nodePlatform.toLowerCase() &&
+                this.getModuleInfo(id)?.code?.includes('node:sqlite')
+              )
+                throw new Error('The local SQLite adapter must not enter the Workers build');
+            }
+          }
+        },
+      } satisfies Plugin,
       vinext(),
       sites(),
       cloudflare({

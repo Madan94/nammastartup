@@ -5,6 +5,7 @@ import { requireSameOrigin, readJson, apiError } from '@/lib/server/http';
 import { z } from 'zod';
 export async function POST(request: Request) {
   try {
+    const input = await readJson(request);
     requireSameOrigin(request);
     if (!(await isAdmin()))
       return Response.json({ error: 'Sign in as an administrator.' }, { status: 401 });
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
         verified: z.boolean().optional(),
         company: z.unknown().optional(),
       })
-      .parse(await readJson(request));
+      .parse(input);
     if (body.action === 'approve' && !body.verified)
       return Response.json(
         { error: 'Verify the official source before approving.' },

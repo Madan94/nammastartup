@@ -1,27 +1,48 @@
 ﻿import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { mkdtempSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { mkdtempSync, realpathSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { randomBytes } from 'node:crypto';
 const directory = mkdtempSync(join(tmpdir(), 'namma-http-'));
 const key = randomBytes(32).toString('hex');
-const base = 'http://localhost:3012';
-const server = spawn(
-  process.execPath,
-  ['node_modules/next/dist/bin/next', 'start', '--port', '3012'],
-  {
-    cwd: process.cwd(),
-    env: {
-      ...process.env,
-      DATABASE_PATH: join(directory, 'smoke.sqlite'),
-      ADMIN_ACCESS_KEY: key,
-      NEXT_PUBLIC_APP_URL: base,
-    },
-    stdio: ['ignore', 'pipe', 'pipe'],
-    windowsHide: true,
+const worker = process.argv.includes('--worker');
+const port = worker ? '3013' : '3012';
+const base = 'http://localhost:' + port;
+const cloudflareRequire = worker
+  ? createRequire(realpathSync('node_modules/@cloudflare/vite-plugin/package.json'))
+  : null;
+const args = worker
+  ? [
+      join(dirname(cloudflareRequire.resolve('wrangler/package.json')), 'bin/wrangler.js'),
+      'dev',
+      '--local',
+      '--config',
+      'dist/server/wrangler.json',
+      '--port',
+      port,
+      '--persist-to',
+      directory,
+      '--var',
+      'ADMIN_ACCESS_KEY:' + key,
+      '--var',
+      'NEXT_PUBLIC_APP_URL:' + base,
+    ]
+  : ['node_modules/next/dist/bin/next', 'start', '--port', port];
+const server = spawn(process.execPath, args, {
+  cwd: process.cwd(),
+  env: {
+    ...process.env,
+    DATABASE_PATH: join(directory, 'smoke.sqlite'),
+    ADMIN_ACCESS_KEY: key,
+    NEXT_PUBLIC_APP_URL: base,
+    WRANGLER_SEND_METRICS: 'false',
+    WRANGLER_WRITE_LOGS: 'false',
   },
-);
+  stdio: ['ignore', 'pipe', 'pipe'],
+  windowsHide: true,
+});
 let logs = '';
 server.stdout.on('data', (c) => (logs += c));
 server.stderr.on('data', (c) => (logs += c));
@@ -31,8 +52,10 @@ async function get(path, status = 200) {
   const response = await fetch(base + path, {
     headers: cookie ? { cookie } : {},
     redirect: 'manual',
+    signal: AbortSignal.timeout(60000),
   });
   assert.equal(response.status, status, path);
+  await response.clone().arrayBuffer();
   checks++;
   return response;
 }
@@ -41,6 +64,7 @@ async function post(path, body, status = 200, origin = base) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Origin: origin, ...(cookie ? { cookie } : {}) },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(30000),
   });
   assert.equal(response.status, status, path + ' ' + (await response.clone().text()));
   checks++;
@@ -50,7 +74,7 @@ try {
   let ready = false;
   for (let attempt = 0; attempt < 60; attempt++) {
     try {
-      const r = await fetch(base + '/api/companies');
+      const r = await fetch(base + '/api/companies', { signal: AbortSignal.timeout(10000) });
       if (r.ok) {
         ready = true;
         break;
@@ -58,7 +82,7 @@ try {
     } catch {}
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
-  assert.ok(ready, 'Server did not start: ' + logs);
+  assert.ok(ready, 'Server did not become healthy; see the bounded log excerpt below.');
   const catalog = await (await get('/api/companies')).json();
   assert.ok(catalog.count >= 8);
   const company = catalog.companies[0];
@@ -84,6 +108,10 @@ try {
   ])
     await get(path);
   await get('/company/does-not-exist', 404);
+  const jobs = await (await get('/api/jobs')).json();
+  const news = await (await get('/api/news')).json();
+  assert.ok(Array.isArray(jobs.jobs) && jobs.count === jobs.jobs.length);
+  assert.ok(Array.isArray(news.news) && news.count === news.news.length);
   await get('/search', 308);
   assert.equal((await (await get('/api/companies?q=no-match-unique')).json()).count, 0);
   await post('/api/admin/refresh', {}, 401);
@@ -187,11 +215,26 @@ try {
   await post('/api/admin/logout', {});
   cookie = '';
   await post('/api/admin/manage', { id: record.slug, action: 'hide' }, 401);
-  console.log(JSON.stringify({ checks, passed: true, isolatedDatabase: directory }));
+  console.log(
+    JSON.stringify({
+      runtime: worker ? 'Cloudflare Workers/D1' : 'Next/SQLite',
+      checks,
+      importedJobs: jobs.count,
+      importedNews: news.count,
+      passed: true,
+      isolatedDatabase: directory,
+    }),
+  );
 } catch (error) {
+  writeFileSync(join(directory, 'server.log'), logs.replaceAll(key, '[test secret redacted]'));
   console.error(error);
-  console.error(logs.slice(-4000));
+  console.error(logs.slice(-4000).replaceAll(key, '[test secret redacted]'));
   process.exitCode = 1;
 } finally {
-  server.kill();
+  if (process.platform === 'win32' && server.pid) {
+    spawnSync('taskkill', ['/PID', String(server.pid), '/T', '/F'], {
+      windowsHide: true,
+      stdio: 'ignore',
+    });
+  } else server.kill();
 }

@@ -3,13 +3,14 @@ import { submissionSchema } from '@/lib/catalog/validation';
 import { apiError, rateLimit, readJson, requireSameOrigin } from '@/lib/server/http';
 export async function POST(request: Request) {
   try {
+    const input = await readJson(request);
     requireSameOrigin(request);
     if (!(await rateLimit(request, 'submit')))
       return Response.json(
         { error: 'Too many submissions. Please try again later.' },
         { status: 429 },
       );
-    const data = submissionSchema.parse(await readJson(request));
+    const data = submissionSchema.parse(input);
     const db = await database();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();

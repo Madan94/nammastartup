@@ -3,10 +3,11 @@ import { correctionSchema } from '@/lib/catalog/validation';
 import { apiError, rateLimit, readJson, requireSameOrigin } from '@/lib/server/http';
 export async function POST(request: Request) {
   try {
+    const input = await readJson(request);
     requireSameOrigin(request);
     if (!(await rateLimit(request, 'correct')))
       return Response.json({ error: 'Too many requests. Try again later.' }, { status: 429 });
-    const data = correctionSchema.parse(await readJson(request));
+    const data = correctionSchema.parse(input);
     const company = await getCompany(data.companySlug);
     if (!company) return Response.json({ error: 'Company not found.' }, { status: 404 });
     const id = crypto.randomUUID(),

@@ -7,6 +7,7 @@ export function requireSameOrigin(request: Request) {
   if (!origin || !allowed.has(origin)) throw new Error('ORIGIN');
 }
 export async function readJson(request: Request) {
+  // Consume bounded bodies before an early response so Workers can close the request cleanly.
   if (!request.headers.get('content-type')?.includes('application/json')) throw new Error('JSON');
   if (Number(request.headers.get('content-length') || 0) > 8192) throw new Error('SIZE');
   const text = await limitedText(new Response(request.body), 8192);

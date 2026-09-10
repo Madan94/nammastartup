@@ -2,7 +2,7 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Search, Map, LayoutGrid, ArrowUpRight, MapPin, X } from 'lucide-react';
 import { filterCompanies, parseFilters } from '@/lib/catalog/filters';
 import type { Company } from '@/lib/catalog/types';
@@ -18,7 +18,6 @@ export function Directory({
   hiringSlugs?: string[];
 }) {
   const params = useSearchParams();
-  const router = useRouter();
   const filters = parseFilters(params);
   const mode = params.get('view') === 'grid' ? 'grid' : 'map';
   const [selected, setSelected] = useState('');
@@ -28,10 +27,10 @@ export function Directory({
     [companies, params, hiringSlugs],
   );
   function update(key: string, value: string) {
-    const next = new URLSearchParams(params.toString());
+    const next = new URLSearchParams(window.location.search);
     if (value) next.set(key, value);
     else next.delete(key);
-    router.replace('/?' + next.toString(), { scroll: false });
+    window.history.replaceState(null, '', '/?' + next.toString());
   }
   const picked = companies.find((c) => c.slug === selected);
   return (
@@ -89,7 +88,7 @@ export function Directory({
         {Object.values(filters).some(Boolean) && (
           <button
             className="clear-filters"
-            onClick={() => router.replace('/?view=' + mode, { scroll: false })}
+            onClick={() => window.history.replaceState(null, '', '/?view=' + mode)}
           >
             Clear filters
           </button>

@@ -22,3 +22,5 @@ jobs:
       - run: corepack pnpm typecheck
       - run: corepack pnpm test:smoke
       - run: corepack pnpm build:sites
+      - run: node scripts/smoke.mjs --worker
+      - run: corepack pnpm audit --prod

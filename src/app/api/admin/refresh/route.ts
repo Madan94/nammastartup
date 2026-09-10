@@ -1,8 +1,9 @@
 ﻿import { isAdmin } from '@/lib/server/auth';
 import { refreshIfDue } from '@/lib/ingestion/refresh';
-import { requireSameOrigin, apiError } from '@/lib/server/http';
+import { requireSameOrigin, readJson, apiError } from '@/lib/server/http';
 export async function POST(request: Request) {
   try {
+    await readJson(request);
     requireSameOrigin(request);
     if (!(await isAdmin()))
       return Response.json({ error: 'Administrator access required.' }, { status: 401 });

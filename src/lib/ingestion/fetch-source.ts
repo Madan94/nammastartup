@@ -61,7 +61,7 @@ export async function fetchSource(url: string) {
   const origin = new URL(url).origin;
   const robots = await fetch(origin + '/robots.txt', {
     headers: { 'User-Agent': agent },
-    redirect: 'error',
+    redirect: 'manual',
     signal: AbortSignal.timeout(10000),
     cache: 'no-store',
   });
@@ -77,7 +77,7 @@ export async function fetchSource(url: string) {
   }
   const response = await fetch(url, {
     headers: { 'User-Agent': agent },
-    redirect: 'error',
+    redirect: 'manual',
     signal: AbortSignal.timeout(15000),
     cache: 'no-store',
   });

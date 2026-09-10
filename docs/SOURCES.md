@@ -31,6 +31,6 @@ An accessible page or RSS endpoint is not a general license to copy all publishe
 
 `src/data/area-locations.json` records Nominatim results and OpenStreetMap objects for resolved neighbourhoods. The verification script spaces requests by at least 1.2 seconds and identifies itself. It is a maintenance command, not a per-visitor geocoder.
 
-Markers are neighbourhood centroids, not surveyed offices. Companies sharing an area appear together in its popup. Kizhakottaiyur did not yield a verified result and remains unmapped. All records remain available in the grid and through address-based directions links.
+Markers are neighbourhood centroids, not surveyed offices. Selecting a marker shows the company and nearby companies sharing its area. Kizhakottaiyur did not yield a verified result and remains unmapped. All records remain available in the grid and through address-based directions links.
 
 Maps credit OpenStreetMap contributors. Standard OpenStreetMap tiles are used without prefetching or bulk downloads. Review the [tile policy](https://operations.osmfoundation.org/policies/tiles/) and [Nominatim policy](https://operations.osmfoundation.org/policies/nominatim/) before changing traffic or geocoding behaviour.

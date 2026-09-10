@@ -4,6 +4,7 @@ import { requireSameOrigin, readJson, apiError } from '@/lib/server/http';
 import { z } from 'zod';
 export async function POST(request: Request) {
   try {
+    const input = await readJson(request);
     requireSameOrigin(request);
     if (!(await isAdmin()))
       return Response.json({ error: 'Administrator access required.' }, { status: 401 });
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
         action: z.enum(['hide', 'publish', 'delete-submission']),
         id: z.string().min(1).max(150),
       })
-      .parse(await readJson(request));
+      .parse(input);
     const db = await database();
     const statement =
       data.action === 'delete-submission'
