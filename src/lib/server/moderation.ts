@@ -1,8 +1,78 @@
-﻿import {database} from './repository';
-import type {Company} from '@/lib/catalog/types';
-export interface SubmissionRow{id:string;kind:string;name:string;website:string;email:string;payload:string;status:string;note:string;created_at:string;updated_at:string}
-export async function listSubmissions(){return(await database()).all<SubmissionRow>('SELECT * FROM submissions ORDER BY created_at DESC LIMIT 200');}
-export async function reviewSubmission(id:string,action:'approve'|'reject',note:string,company?:Company){const db=await database();const [submission]=await db.all<SubmissionRow>('SELECT * FROM submissions WHERE id=?',[id]);if(!submission)throw new Error('NOT_FOUND');if(submission.status!=='pending')throw new Error('ALREADY_REVIEWED');const now=new Date().toISOString();const statements=[];
- if(action==='approve'&&submission.kind==='company'){if(!company)throw new Error('COMPANY_REQUIRED');const existing=await db.all('SELECT slug FROM companies WHERE slug=?',[company.slug]);if(existing.length)throw new Error('DUPLICATE');statements.push({sql:"INSERT INTO companies (slug,name,sector,area,kind,record,status,updated_at) SELECT ?,?,?,?,?,?,'published',? WHERE EXISTS (SELECT 1 FROM submissions WHERE id=? AND status='pending')",params:[company.slug,company.name,company.sector,company.area,company.kind,JSON.stringify(company),now,id]});}
- if(action==='approve'&&submission.kind==='correction'){if(!company)throw new Error('COMPANY_REQUIRED');statements.push({sql:"UPDATE companies SET name=?,sector=?,area=?,kind=?,record=?,updated_at=? WHERE slug=? AND EXISTS(SELECT 1 FROM submissions WHERE id=? AND status='pending')",params:[company.name,company.sector,company.area,company.kind,JSON.stringify(company),now,company.slug,id]});}
- statements.push({sql:"UPDATE submissions SET status=?,note=?,updated_at=? WHERE id=? AND status='pending'",params:[action==='approve'?'approved':'rejected',note,now,id]},{sql:'INSERT INTO audit (id,action,record_id,created_at) VALUES (?,?,?,?)',params:[crypto.randomUUID(),action,id,now]});await db.batch(statements);return {status:action==='approve'?'approved':'rejected'};}
+﻿import { database } from './repository';
+import type { Company } from '@/lib/catalog/types';
+export interface SubmissionRow {
+  id: string;
+  kind: string;
+  name: string;
+  website: string;
+  email: string;
+  payload: string;
+  status: string;
+  note: string;
+  created_at: string;
+  updated_at: string;
+}
+export async function listSubmissions() {
+  return (await database()).all<SubmissionRow>(
+    'SELECT * FROM submissions ORDER BY created_at DESC LIMIT 200',
+  );
+}
+export async function reviewSubmission(
+  id: string,
+  action: 'approve' | 'reject',
+  note: string,
+  company?: Company,
+) {
+  const db = await database();
+  const [submission] = await db.all<SubmissionRow>('SELECT * FROM submissions WHERE id=?', [id]);
+  if (!submission) throw new Error('NOT_FOUND');
+  if (submission.status !== 'pending') throw new Error('ALREADY_REVIEWED');
+  const now = new Date().toISOString();
+  const statements = [];
+  if (action === 'approve' && submission.kind === 'company') {
+    if (!company) throw new Error('COMPANY_REQUIRED');
+    const existing = await db.all('SELECT slug FROM companies WHERE slug=?', [company.slug]);
+    if (existing.length) throw new Error('DUPLICATE');
+    statements.push({
+      sql: "INSERT INTO companies (slug,name,sector,area,kind,record,status,updated_at) SELECT ?,?,?,?,?,?,'published',? WHERE EXISTS (SELECT 1 FROM submissions WHERE id=? AND status='pending')",
+      params: [
+        company.slug,
+        company.name,
+        company.sector,
+        company.area,
+        company.kind,
+        JSON.stringify(company),
+        now,
+        id,
+      ],
+    });
+  }
+  if (action === 'approve' && submission.kind === 'correction') {
+    if (!company) throw new Error('COMPANY_REQUIRED');
+    statements.push({
+      sql: "UPDATE companies SET name=?,sector=?,area=?,kind=?,record=?,updated_at=? WHERE slug=? AND EXISTS(SELECT 1 FROM submissions WHERE id=? AND status='pending')",
+      params: [
+        company.name,
+        company.sector,
+        company.area,
+        company.kind,
+        JSON.stringify(company),
+        now,
+        company.slug,
+        id,
+      ],
+    });
+  }
+  statements.push(
+    {
+      sql: "UPDATE submissions SET status=?,note=?,updated_at=? WHERE id=? AND status='pending'",
+      params: [action === 'approve' ? 'approved' : 'rejected', note, now, id],
+    },
+    {
+      sql: 'INSERT INTO audit (id,action,record_id,created_at) VALUES (?,?,?,?)',
+      params: [crypto.randomUUID(), action, id, now],
+    },
+  );
+  await db.batch(statements);
+  return { status: action === 'approve' ? 'approved' : 'rejected' };
+}

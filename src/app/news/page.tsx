@@ -1,6 +1,51 @@
-import {refreshIfDue} from '@/lib/ingestion/refresh';
-import {Freshness} from '@/components/catalog/freshness';
-﻿import {ArrowUpRight} from 'lucide-react';
-import {listNews} from '@/lib/server/repository';
-export const dynamic='force-dynamic';
-export default async function NewsPage(){await refreshIfDue('news');const items=await listNews();return <main id="main-content" className="page-wrap"><span className="eyebrow">The Chennai pulse</span><h1>Big ideas. Local beginnings.</h1><p className="lead">Stories shared by Chennai companies through their official feeds. Dates are supplied by the feeds and may reflect when a company shared an older article.</p><div className="news-list">{items.map((item,index)=><article className="news-card" key={item.id}><span className="news-index">{String(index+1).padStart(2,'0')}</span><div><span className="eyebrow">{item.publisher}</span><h2><a href={item.url} target="_blank" rel="noreferrer">{item.title}<ArrowUpRight size={19}/></a></h2><small>{item.publishedAt?new Date(item.publishedAt).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):'Publication date unavailable'}</small></div></article>)}</div>{!items.length&&<div className="empty-state"><h2>No sourced stories available yet.</h2><p>Official feeds will appear here after a successful refresh.</p></div>}<Freshness category="news"/></main>}
+import { refreshIfDue } from '@/lib/ingestion/refresh';
+import { Freshness } from '@/components/catalog/freshness';
+import { ArrowUpRight } from 'lucide-react';
+import { listNews } from '@/lib/server/repository';
+export const dynamic = 'force-dynamic';
+export default async function NewsPage() {
+  await refreshIfDue('news');
+  const items = await listNews();
+  return (
+    <main id="main-content" className="page-wrap">
+      <span className="eyebrow">The Chennai pulse</span>
+      <h1>Big ideas. Local beginnings.</h1>
+      <p className="lead">
+        Stories shared by Chennai companies through their official feeds. Dates are supplied by the
+        feeds and may reflect when a company shared an older article.
+      </p>
+      <div className="news-list">
+        {items.map((item, index) => (
+          <article className="news-card" key={item.id}>
+            <span className="news-index">{String(index + 1).padStart(2, '0')}</span>
+            <div>
+              <span className="eyebrow">{item.publisher}</span>
+              <h2>
+                <a href={item.url} target="_blank" rel="noreferrer">
+                  {item.title}
+                  <ArrowUpRight size={19} />
+                </a>
+              </h2>
+              <small>
+                {item.publishedAt
+                  ? new Date(item.publishedAt).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })
+                  : 'Publication date unavailable'}
+              </small>
+            </div>
+          </article>
+        ))}
+      </div>
+      {!items.length && (
+        <div className="empty-state">
+          <h2>No sourced stories available yet.</h2>
+          <p>Official feeds will appear here after a successful refresh.</p>
+        </div>
+      )}
+      <Freshness category="news" />
+    </main>
+  );
+}

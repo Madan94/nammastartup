@@ -3,7 +3,7 @@ export interface Company {
   name: string;
   description: string;
   sector: string;
-  kind: "Startup" | "Scaleup" | "Established";
+  kind: 'Startup' | 'Scaleup' | 'Established';
   area: string;
   address: string;
   website: string;
@@ -12,7 +12,7 @@ export interface Company {
   verifiedAt: string;
   latitude: number | null;
   longitude: number | null;
-  locationPrecision: "office" | "area" | "unverified";
+  locationPrecision: 'office' | 'area' | 'unverified';
 }
 
 export interface JobListing {

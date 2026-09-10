@@ -1,4 +1,23 @@
-import {refreshIfDue} from '@/lib/ingestion/refresh';
-﻿import {listJobs,listCompanies} from '@/lib/server/repository';
-export const dynamic='force-dynamic';
-export async function GET(request:Request){await refreshIfDue('jobs');const params=new URL(request.url).searchParams;const query=(params.get('q')||'').toLowerCase();const company=params.get('company');const [jobs,companies]=await Promise.all([listJobs(),listCompanies()]);const results=jobs.filter(j=>(!company||j.companySlug===company)&&(!query||[j.title,j.location,companies.find(c=>c.slug===j.companySlug)?.name].join(' ').toLowerCase().includes(query)));return Response.json({jobs:results,count:results.length},{headers:{'Cache-Control':'no-store'}})}
+import { refreshIfDue } from '@/lib/ingestion/refresh';
+import { listJobs, listCompanies } from '@/lib/server/repository';
+export const dynamic = 'force-dynamic';
+export async function GET(request: Request) {
+  await refreshIfDue('jobs');
+  const params = new URL(request.url).searchParams;
+  const query = (params.get('q') || '').toLowerCase();
+  const company = params.get('company');
+  const [jobs, companies] = await Promise.all([listJobs(), listCompanies()]);
+  const results = jobs.filter(
+    (j) =>
+      (!company || j.companySlug === company) &&
+      (!query ||
+        [j.title, j.location, companies.find((c) => c.slug === j.companySlug)?.name]
+          .join(' ')
+          .toLowerCase()
+          .includes(query)),
+  );
+  return Response.json(
+    { jobs: results, count: results.length },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
+}

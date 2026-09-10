@@ -1,12 +1,131 @@
-import type {Metadata} from 'next';
-import {siteOrigin} from '@/lib/config/origin';
-﻿import Link from 'next/link';
-import {notFound} from 'next/navigation';
-import {ArrowLeft,ArrowUpRight,MapPin,Globe,BriefcaseBusiness} from 'lucide-react';
-import {getCompany,listJobs} from '@/lib/server/repository';
-export const dynamic='force-dynamic';
-export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const company=await getCompany((await params).slug);if(!company)return {title:'Company not found'};const title=company.name+' | Chennai Startup Map';return {title,description:company.description,alternates:{canonical:siteOrigin()+'/company/'+company.slug},openGraph:{title,description:company.description,url:siteOrigin()+'/company/'+company.slug,images:[]},twitter:{card:'summary',title,description:company.description,images:[]}};}
-export default async function CompanyPage({params}:{params:Promise<{slug:string}>}){
- const {slug}=await params;const company=await getCompany(slug);if(!company)notFound();const jobs=(await listJobs()).filter(j=>j.companySlug===slug);
- return <main id="main-content" className="page-wrap"><Link href="/" className="back-link"><ArrowLeft size={15}/>Back to the map</Link><section className="profile-hero"><span className="company-initial">{company.name.slice(0,2).toUpperCase()}</span><div className="profile-badges"><span>{company.sector}</span><span>{company.kind}</span></div><h1>{company.name}</h1><p className="lead">{company.description}</p><div className="profile-actions"><a className="primary-button" href={company.website} target="_blank" rel="noreferrer"><Globe size={16}/>Visit website<ArrowUpRight size={15}/></a>{company.careersUrl&&<a className="secondary-button" href={company.careersUrl} target="_blank" rel="noreferrer"><BriefcaseBusiness size={16}/>Official careers</a>}</div></section><div className="profile-columns"><section className="profile-section"><h2>In Chennai</h2><p><MapPin size={16}/> {company.area}</p><p className="muted">{company.address}</p><a className="text-link" href={'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(company.address)} target="_blank" rel="noreferrer">Get directions <ArrowUpRight size={14}/></a><h2>Current opportunities</h2>{jobs.length?jobs.map(job=><a className="job-link" key={job.id} href={job.url} target="_blank" rel="noreferrer"><div><b>{job.title}</b><small>{job.location}</small></div><ArrowUpRight size={16}/></a>):<p className="muted">No verified job listings in our directory yet.{company.careersUrl?' Check the official careers page for the latest openings.':''}</p>}</section><aside className="profile-section"><span className="eyebrow">A directory you can check</span><h2>Information & sources</h2><p>Company information checked against its official website.</p><a className="text-link" href={company.sourceUrl} target="_blank" rel="noreferrer">View original source <ArrowUpRight size={14}/></a><p className="muted">Last verified: {new Date(company.verifiedAt).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Kolkata'})}</p><p className="muted">Listings are independent. Inclusion does not imply endorsement or an affiliation.</p><Link className="text-link" href={'/correct?company='+company.slug}>Suggest a correction <ArrowUpRight size={14}/></Link></aside></div></main>;
+import type { Metadata } from 'next';
+import { siteOrigin } from '@/lib/config/origin';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { ArrowLeft, ArrowUpRight, MapPin, Globe, BriefcaseBusiness } from 'lucide-react';
+import { getCompany, listJobs } from '@/lib/server/repository';
+export const dynamic = 'force-dynamic';
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const company = await getCompany((await params).slug);
+  if (!company) return { title: 'Company not found' };
+  const title = company.name + ' | Chennai Startup Map';
+  return {
+    title,
+    description: company.description,
+    alternates: { canonical: siteOrigin() + '/company/' + company.slug },
+    openGraph: {
+      title,
+      description: company.description,
+      url: siteOrigin() + '/company/' + company.slug,
+      images: [],
+    },
+    twitter: { card: 'summary', title, description: company.description, images: [] },
+  };
+}
+export default async function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const company = await getCompany(slug);
+  if (!company) notFound();
+  const jobs = (await listJobs()).filter((j) => j.companySlug === slug);
+  return (
+    <main id="main-content" className="page-wrap">
+      <Link href="/" className="back-link">
+        <ArrowLeft size={15} />
+        Back to the map
+      </Link>
+      <section className="profile-hero">
+        <span className="company-initial">{company.name.slice(0, 2).toUpperCase()}</span>
+        <div className="profile-badges">
+          <span>{company.sector}</span>
+          <span>{company.kind}</span>
+        </div>
+        <h1>{company.name}</h1>
+        <p className="lead">{company.description}</p>
+        <div className="profile-actions">
+          <a className="primary-button" href={company.website} target="_blank" rel="noreferrer">
+            <Globe size={16} />
+            Visit website
+            <ArrowUpRight size={15} />
+          </a>
+          {company.careersUrl && (
+            <a
+              className="secondary-button"
+              href={company.careersUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <BriefcaseBusiness size={16} />
+              Official careers
+            </a>
+          )}
+        </div>
+      </section>
+      <div className="profile-columns">
+        <section className="profile-section">
+          <h2>In Chennai</h2>
+          <p>
+            <MapPin size={16} /> {company.area}
+          </p>
+          <p className="muted">{company.address}</p>
+          <a
+            className="text-link"
+            href={
+              'https://www.google.com/maps/search/?api=1&query=' +
+              encodeURIComponent(company.address)
+            }
+            target="_blank"
+            rel="noreferrer"
+          >
+            Get directions <ArrowUpRight size={14} />
+          </a>
+          <h2>Current opportunities</h2>
+          {jobs.length ? (
+            jobs.map((job) => (
+              <a className="job-link" key={job.id} href={job.url} target="_blank" rel="noreferrer">
+                <div>
+                  <b>{job.title}</b>
+                  <small>{job.location}</small>
+                </div>
+                <ArrowUpRight size={16} />
+              </a>
+            ))
+          ) : (
+            <p className="muted">
+              No verified job listings in our directory yet.
+              {company.careersUrl
+                ? ' Check the official careers page for the latest openings.'
+                : ''}
+            </p>
+          )}
+        </section>
+        <aside className="profile-section">
+          <span className="eyebrow">A directory you can check</span>
+          <h2>Information & sources</h2>
+          <p>Company information checked against its official website.</p>
+          <a className="text-link" href={company.sourceUrl} target="_blank" rel="noreferrer">
+            View original source <ArrowUpRight size={14} />
+          </a>
+          <p className="muted">
+            Last verified:{' '}
+            {new Date(company.verifiedAt).toLocaleDateString('en-IN', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+              timeZone: 'Asia/Kolkata',
+            })}
+          </p>
+          <p className="muted">
+            Listings are independent. Inclusion does not imply endorsement or an affiliation.
+          </p>
+          <Link className="text-link" href={'/correct?company=' + company.slug}>
+            Suggest a correction <ArrowUpRight size={14} />
+          </Link>
+        </aside>
+      </div>
+    </main>
+  );
 }

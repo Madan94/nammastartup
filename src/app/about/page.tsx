@@ -1,4 +1,61 @@
 ﻿import Link from 'next/link';
-import {listCompanies,listJobs} from '@/lib/server/repository';
-export const dynamic='force-dynamic';
-export default async function AboutPage(){const [companies,jobs]=await Promise.all([listCompanies(),listJobs()]);return <main id="main-content" className="page-wrap prose-page"><span className="eyebrow">Namma ooru. Namma builders.</span><h1>Chennai has a story worth mapping.</h1><p className="lead">Namma Startup is an independent directory of companies building in Chennai and its surrounding startup corridor. It connects founders, job seekers, and curious neighbours with information they can verify.</p><div className="about-stats"><div><strong>{companies.length}</strong><span>Published companies</span></div><div><strong>{jobs.length}</strong><span>Source-listed jobs</span></div><div><strong>{new Set(companies.map(c=>c.area)).size}</strong><span>Neighbourhoods</span></div></div><h2>Real records. Clear sources.</h2><p>Company profiles link to an official source and show when the information was checked. Our company-type labels are editorial categories, not a claim about funding rounds or government registration. Established companies and startups are separated by a filter.</p><h2>How updates work</h2><p>Public submissions enter a private review queue. Administrators verify the company and its Chennai presence before publishing. Jobs and news are refreshed from configured official sources when their pages are visited, at most once every six hours. There is no background refresh when the site has no traffic. A failed refresh keeps the previous records and their original observation dates.</p><h2>Coverage grows with the community</h2><p>This is a curated directory, not a complete census of Chennai companies or open jobs. A careers link alone is never counted as an open role. Missing information stays missing, and map markers explicitly distinguish an office location from an approximate neighbourhood.</p><h2>Free to be on the map</h2><p>Listings are free. There are no paid rankings or sponsored placements in this release.</p><div className="profile-actions"><Link href="/submit" className="primary-button">Add a company</Link><Link href="/correct" className="secondary-button">Suggest a correction</Link></div></main>}
+import { listCompanies, listJobs } from '@/lib/server/repository';
+export const dynamic = 'force-dynamic';
+export default async function AboutPage() {
+  const [companies, jobs] = await Promise.all([listCompanies(), listJobs()]);
+  return (
+    <main id="main-content" className="page-wrap prose-page">
+      <span className="eyebrow">Namma ooru. Namma builders.</span>
+      <h1>Chennai has a story worth mapping.</h1>
+      <p className="lead">
+        Namma Startup is an independent directory of companies building in Chennai and its
+        surrounding startup corridor. It connects founders, job seekers, and curious neighbours with
+        information they can verify.
+      </p>
+      <div className="about-stats">
+        <div>
+          <strong>{companies.length}</strong>
+          <span>Published companies</span>
+        </div>
+        <div>
+          <strong>{jobs.length}</strong>
+          <span>Source-listed jobs</span>
+        </div>
+        <div>
+          <strong>{new Set(companies.map((c) => c.area)).size}</strong>
+          <span>Neighbourhoods</span>
+        </div>
+      </div>
+      <h2>Real records. Clear sources.</h2>
+      <p>
+        Company profiles link to an official source and show when the information was checked. Our
+        company-type labels are editorial categories, not a claim about funding rounds or government
+        registration. Established companies and startups are separated by a filter.
+      </p>
+      <h2>How updates work</h2>
+      <p>
+        Public submissions enter a private review queue. Administrators verify the company and its
+        Chennai presence before publishing. Jobs and news are refreshed from configured official
+        sources when their pages are visited, at most once every six hours. There is no background
+        refresh when the site has no traffic. A failed refresh keeps the previous records and their
+        original observation dates.
+      </p>
+      <h2>Coverage grows with the community</h2>
+      <p>
+        This is a curated directory, not a complete census of Chennai companies or open jobs. A
+        careers link alone is never counted as an open role. Missing information stays missing, and
+        map markers explicitly distinguish an office location from an approximate neighbourhood.
+      </p>
+      <h2>Free to be on the map</h2>
+      <p>Listings are free. There are no paid rankings or sponsored placements in this release.</p>
+      <div className="profile-actions">
+        <Link href="/submit" className="primary-button">
+          Add a company
+        </Link>
+        <Link href="/correct" className="secondary-button">
+          Suggest a correction
+        </Link>
+      </div>
+    </main>
+  );
+}

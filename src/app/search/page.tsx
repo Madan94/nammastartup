@@ -1,2 +1,4 @@
-import {permanentRedirect} from 'next/navigation';
-export default function LegacyPage(){permanentRedirect('/');}
+import { permanentRedirect } from 'next/navigation';
+export default function LegacyPage() {
+  permanentRedirect('/');
+}

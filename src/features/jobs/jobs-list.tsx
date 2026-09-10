@@ -1,6 +1,72 @@
-﻿"use client";
-import {useState} from 'react';
+﻿'use client';
+import { useState } from 'react';
 import Link from 'next/link';
-import {ArrowUpRight,Search} from 'lucide-react';
-import type {Company,JobListing} from '@/lib/catalog/types';
-export function JobsList({jobs,companies}:{jobs:JobListing[];companies:Company[]}){const [query,setQuery]=useState('');const [company,setCompany]=useState('');const filtered=jobs.filter(j=>(!company||j.companySlug===company)&&[j.title,j.location,companies.find(c=>c.slug===j.companySlug)?.name].join(' ').toLowerCase().includes(query.toLowerCase()));return <><div className="jobs-controls"><label className="directory-search"><Search size={17}/><input aria-label="Search jobs" placeholder="Search roles or companies…" value={query} onChange={e=>setQuery(e.target.value)}/></label><select aria-label="Filter jobs by company" value={company} onChange={e=>setCompany(e.target.value)}><option value="">All companies</option>{companies.filter(c=>jobs.some(j=>j.companySlug===c.slug)).map(c=><option key={c.slug} value={c.slug}>{c.name}</option>)}</select></div><p className="muted result-count" aria-live="polite">{filtered.length} listed {filtered.length===1?'opportunity':'opportunities'}</p><div className="jobs-grid">{filtered.map(job=><article className="job-card" key={job.id}><Link href={'/company/'+job.companySlug} className="eyebrow">{companies.find(c=>c.slug===job.companySlug)?.name}</Link><h2>{job.title}</h2><p>{job.location}</p><div><small>Checked {new Date(job.observedAt).toLocaleDateString('en-IN')}</small><a href={job.url} target="_blank" rel="noreferrer">View official listing <ArrowUpRight size={15}/></a></div></article>)}</div>{!filtered.length&&<div className="empty-state"><h2>No verified openings match yet.</h2><p>Try another filter, or visit a company’s official careers page.</p></div>}</>}
+import { ArrowUpRight, Search } from 'lucide-react';
+import type { Company, JobListing } from '@/lib/catalog/types';
+export function JobsList({ jobs, companies }: { jobs: JobListing[]; companies: Company[] }) {
+  const [query, setQuery] = useState('');
+  const [company, setCompany] = useState('');
+  const filtered = jobs.filter(
+    (j) =>
+      (!company || j.companySlug === company) &&
+      [j.title, j.location, companies.find((c) => c.slug === j.companySlug)?.name]
+        .join(' ')
+        .toLowerCase()
+        .includes(query.toLowerCase()),
+  );
+  return (
+    <>
+      <div className="jobs-controls">
+        <label className="directory-search">
+          <Search size={17} />
+          <input
+            aria-label="Search jobs"
+            placeholder="Search roles or companies…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </label>
+        <select
+          aria-label="Filter jobs by company"
+          value={company}
+          onChange={(e) => setCompany(e.target.value)}
+        >
+          <option value="">All companies</option>
+          {companies
+            .filter((c) => jobs.some((j) => j.companySlug === c.slug))
+            .map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.name}
+              </option>
+            ))}
+        </select>
+      </div>
+      <p className="muted result-count" aria-live="polite">
+        {filtered.length} listed {filtered.length === 1 ? 'opportunity' : 'opportunities'}
+      </p>
+      <div className="jobs-grid">
+        {filtered.map((job) => (
+          <article className="job-card" key={job.id}>
+            <Link href={'/company/' + job.companySlug} className="eyebrow">
+              {companies.find((c) => c.slug === job.companySlug)?.name}
+            </Link>
+            <h2>{job.title}</h2>
+            <p>{job.location}</p>
+            <div>
+              <small>Checked {new Date(job.observedAt).toLocaleDateString('en-IN')}</small>
+              <a href={job.url} target="_blank" rel="noreferrer">
+                View official listing <ArrowUpRight size={15} />
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+      {!filtered.length && (
+        <div className="empty-state">
+          <h2>No verified openings match yet.</h2>
+          <p>Try another filter, or visit a company’s official careers page.</p>
+        </div>
+      )}
+    </>
+  );
+}

@@ -1,10 +1,297 @@
-﻿"use client";
-import {FormEvent,useState} from 'react';
-import {useRouter} from 'next/navigation';
-import type {Company} from '@/lib/catalog/types';
-import type {SubmissionRow} from '@/lib/server/moderation';
-async function post(url:string,body:unknown){const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw new Error(data.error||'Action failed');return data;}
-export function AdminLogin(){const router=useRouter();const [error,setError]=useState('');const [busy,setBusy]=useState(false);async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setError('');try{await post('/api/admin/login',{key:new FormData(e.currentTarget).get('key')});router.refresh()}catch(e){setError(e instanceof Error?e.message:'Sign in failed')}finally{setBusy(false)}}return <form onSubmit={submit} className="public-form"><label className="full-width">Administrator access key<input name="key" type="password" autoComplete="current-password" required/></label>{error&&<p className="notice error-notice full-width" role="alert">{error}</p>}<div className="full-width"><button className="primary-button" disabled={busy}>{busy?'Signing in…':'Sign in'}</button></div></form>}
-export function AdminActions(){const router=useRouter();const [message,setMessage]=useState('');const [busy,setBusy]=useState(false);async function run(action:string){setBusy(true);setMessage('');try{const result=await post('/api/admin/'+action,{});if(action==='refresh'){const reports=[...(Array.isArray(result.jobs)?result.jobs:[]),...(Array.isArray(result.news)?result.news:[])];setMessage(reports.length?reports.map((r:{source:string;ok:boolean;count?:number;error?:string})=>r.source+': '+(r.ok?r.count+' records':r.error)).join(' · '):'Sources were checked recently. Try again in a minute.')}router.refresh()}catch(e){setMessage(e instanceof Error?e.message:'Action failed')}finally{setBusy(false)}}return <><div className="profile-actions"><button className="primary-button" disabled={busy} onClick={()=>run('refresh')}>Refresh official sources</button><button className="secondary-button" disabled={busy} onClick={()=>run('logout')}>Sign out</button></div>{message&&<p role="status" className="notice">{message}</p>}</>}
-export function ReviewCard({submission,existing}:{submission:SubmissionRow;existing?:Company|null}){const data=JSON.parse(submission.payload);const router=useRouter();const [error,setError]=useState('');const [busy,setBusy]=useState(false);const base=existing||data;async function review(action:'approve'|'reject',form?:HTMLFormElement){setBusy(true);setError('');try{const values=form?Object.fromEntries(new FormData(form)):{};const latitude=values.latitude?Number(values.latitude):null;const longitude=values.longitude?Number(values.longitude):null;const company={...base,...values,careersUrl:values.careersUrl||null,latitude,longitude,locationPrecision:latitude===null?'unverified':values.locationPrecision,verifiedAt:new Date().toISOString()};await post('/api/admin/review',{id:submission.id,action,company,verified:values.verified==='on',note:values.note||''});router.refresh()}catch(e){setError(e instanceof Error?e.message:'Review failed')}finally{setBusy(false)}}return <article className="review-card"><div className="review-heading"><h2>{submission.name}</h2><span>{submission.kind} · {submission.status}</span></div><p className="muted">From {submission.email} · {new Date(submission.created_at).toLocaleString('en-IN')}</p><a className="text-link" href={submission.website} target="_blank" rel="noreferrer">Open submitted website ↗</a>{submission.kind==='correction'&&<p className="notice">Requested correction: {data.description}</p>}{submission.status==='pending'&&<form className="public-form" onSubmit={e=>{e.preventDefault();void review('approve',e.currentTarget)}}>{['name','slug','website','sector','area','address','careersUrl','sourceUrl'].map(name=><label key={name}>{name}<input name={name} defaultValue={base[name]||(name==='slug'?submission.name.toLowerCase().replace(/[^a-z0-9]+/g,'-'):name==='sourceUrl'?submission.website:'')} required={!['careersUrl'].includes(name)} maxLength={500}/></label>)}<label className="full-width">Description<textarea name="description" defaultValue={base.description} rows={3} required maxLength={500}/></label><label>Company type<select name="kind" defaultValue={base.kind||'Startup'}><option>Startup</option><option>Scaleup</option><option>Established</option></select></label><label>Coordinate precision<select name="locationPrecision" defaultValue={base.locationPrecision||'unverified'}><option value="unverified">Unverified</option><option value="area">Area centre</option><option value="office">Office</option></select></label><label>Latitude (optional)<input name="latitude" type="number" step="any" defaultValue={base.latitude??''}/></label><label>Longitude (optional)<input name="longitude" type="number" step="any" defaultValue={base.longitude??''}/></label><label className="full-width">Review note<textarea name="note" rows={2} maxLength={1000}/></label><label className="checkbox-label full-width"><input type="checkbox" name="verified" required/>I checked the official source, company details, and Chennai presence.</label><div className="profile-actions full-width"><button className="primary-button" disabled={busy}>Approve and publish</button><button type="button" className="secondary-button" disabled={busy} onClick={()=>review('reject')}>Reject submission</button></div></form>}<ManageRecord id={submission.id} action="delete-submission" label="Delete private submission"/>{error&&<p role="alert" className="notice error-notice">{error}</p>}</article>}
-export function ManageRecord({id,action,label}:{id:string;action:'hide'|'publish'|'delete-submission';label:string}){const router=useRouter();const [armed,setArmed]=useState(false);const [message,setMessage]=useState('');async function run(){if(!armed){setArmed(true);return}try{await post('/api/admin/manage',{id,action});setArmed(false);router.refresh()}catch(e){setMessage(e instanceof Error?e.message:'Action failed')}}return <span><button type="button" className="secondary-button" onClick={run}>{armed?'Confirm '+label.toLowerCase():label}</button>{armed&&<button type="button" className="secondary-button" onClick={()=>setArmed(false)}>Cancel</button>}{message&&<small role="alert">{message}</small>}</span>}
+﻿'use client';
+import { FormEvent, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import type { Company } from '@/lib/catalog/types';
+import type { SubmissionRow } from '@/lib/server/moderation';
+async function post(url: string, body: unknown) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Action failed');
+  return data;
+}
+export function AdminLogin() {
+  const router = useRouter();
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      await post('/api/admin/login', { key: new FormData(e.currentTarget).get('key') });
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Sign in failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <form onSubmit={submit} className="public-form">
+      <label className="full-width">
+        Administrator access key
+        <input name="key" type="password" autoComplete="current-password" required />
+      </label>
+      {error && (
+        <p className="notice error-notice full-width" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="full-width">
+        <button className="primary-button" disabled={busy}>
+          {busy ? 'Signing in…' : 'Sign in'}
+        </button>
+      </div>
+    </form>
+  );
+}
+export function AdminActions() {
+  const router = useRouter();
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  async function run(action: string) {
+    setBusy(true);
+    setMessage('');
+    try {
+      const result = await post('/api/admin/' + action, {});
+      if (action === 'refresh') {
+        const reports = [
+          ...(Array.isArray(result.jobs) ? result.jobs : []),
+          ...(Array.isArray(result.news) ? result.news : []),
+        ];
+        setMessage(
+          reports.length
+            ? reports
+                .map(
+                  (r: { source: string; ok: boolean; count?: number; error?: string }) =>
+                    r.source + ': ' + (r.ok ? r.count + ' records' : r.error),
+                )
+                .join(' · ')
+            : 'Sources were checked recently. Try again in a minute.',
+        );
+      }
+      router.refresh();
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Action failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <>
+      <div className="profile-actions">
+        <button className="primary-button" disabled={busy} onClick={() => run('refresh')}>
+          Refresh official sources
+        </button>
+        <button className="secondary-button" disabled={busy} onClick={() => run('logout')}>
+          Sign out
+        </button>
+      </div>
+      {message && (
+        <p role="status" className="notice">
+          {message}
+        </p>
+      )}
+    </>
+  );
+}
+export function ReviewCard({
+  submission,
+  existing,
+}: {
+  submission: SubmissionRow;
+  existing?: Company | null;
+}) {
+  const data = JSON.parse(submission.payload);
+  const router = useRouter();
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const base = existing || data;
+  async function review(action: 'approve' | 'reject', form?: HTMLFormElement) {
+    setBusy(true);
+    setError('');
+    try {
+      const values = form ? Object.fromEntries(new FormData(form)) : {};
+      const latitude = values.latitude ? Number(values.latitude) : null;
+      const longitude = values.longitude ? Number(values.longitude) : null;
+      const company = {
+        ...base,
+        ...values,
+        careersUrl: values.careersUrl || null,
+        latitude,
+        longitude,
+        locationPrecision: latitude === null ? 'unverified' : values.locationPrecision,
+        verifiedAt: new Date().toISOString(),
+      };
+      await post('/api/admin/review', {
+        id: submission.id,
+        action,
+        company,
+        verified: values.verified === 'on',
+        note: values.note || '',
+      });
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Review failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <article className="review-card">
+      <div className="review-heading">
+        <h2>{submission.name}</h2>
+        <span>
+          {submission.kind} · {submission.status}
+        </span>
+      </div>
+      <p className="muted">
+        From {submission.email} · {new Date(submission.created_at).toLocaleString('en-IN')}
+      </p>
+      <a className="text-link" href={submission.website} target="_blank" rel="noreferrer">
+        Open submitted website ↗
+      </a>
+      {submission.kind === 'correction' && (
+        <p className="notice">Requested correction: {data.description}</p>
+      )}
+      {submission.status === 'pending' && (
+        <form
+          className="public-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void review('approve', e.currentTarget);
+          }}
+        >
+          {['name', 'slug', 'website', 'sector', 'area', 'address', 'careersUrl', 'sourceUrl'].map(
+            (name) => (
+              <label key={name}>
+                {name}
+                <input
+                  name={name}
+                  defaultValue={
+                    base[name] ||
+                    (name === 'slug'
+                      ? submission.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                      : name === 'sourceUrl'
+                        ? submission.website
+                        : '')
+                  }
+                  required={!['careersUrl'].includes(name)}
+                  maxLength={500}
+                />
+              </label>
+            ),
+          )}
+          <label className="full-width">
+            Description
+            <textarea
+              name="description"
+              defaultValue={base.description}
+              rows={3}
+              required
+              maxLength={500}
+            />
+          </label>
+          <label>
+            Company type
+            <select name="kind" defaultValue={base.kind || 'Startup'}>
+              <option>Startup</option>
+              <option>Scaleup</option>
+              <option>Established</option>
+            </select>
+          </label>
+          <label>
+            Coordinate precision
+            <select name="locationPrecision" defaultValue={base.locationPrecision || 'unverified'}>
+              <option value="unverified">Unverified</option>
+              <option value="area">Area centre</option>
+              <option value="office">Office</option>
+            </select>
+          </label>
+          <label>
+            Latitude (optional)
+            <input name="latitude" type="number" step="any" defaultValue={base.latitude ?? ''} />
+          </label>
+          <label>
+            Longitude (optional)
+            <input name="longitude" type="number" step="any" defaultValue={base.longitude ?? ''} />
+          </label>
+          <label className="full-width">
+            Review note
+            <textarea name="note" rows={2} maxLength={1000} />
+          </label>
+          <label className="checkbox-label full-width">
+            <input type="checkbox" name="verified" required />I checked the official source, company
+            details, and Chennai presence.
+          </label>
+          <div className="profile-actions full-width">
+            <button className="primary-button" disabled={busy}>
+              Approve and publish
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={busy}
+              onClick={() => review('reject')}
+            >
+              Reject submission
+            </button>
+          </div>
+        </form>
+      )}
+      <ManageRecord
+        id={submission.id}
+        action="delete-submission"
+        label="Delete private submission"
+      />
+      {error && (
+        <p role="alert" className="notice error-notice">
+          {error}
+        </p>
+      )}
+    </article>
+  );
+}
+export function ManageRecord({
+  id,
+  action,
+  label,
+}: {
+  id: string;
+  action: 'hide' | 'publish' | 'delete-submission';
+  label: string;
+}) {
+  const router = useRouter();
+  const [armed, setArmed] = useState(false);
+  const [message, setMessage] = useState('');
+  async function run() {
+    if (!armed) {
+      setArmed(true);
+      return;
+    }
+    try {
+      await post('/api/admin/manage', { id, action });
+      setArmed(false);
+      router.refresh();
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Action failed');
+    }
+  }
+  return (
+    <span>
+      <button type="button" className="secondary-button" onClick={run}>
+        {armed ? 'Confirm ' + label.toLowerCase() : label}
+      </button>
+      {armed && (
+        <button type="button" className="secondary-button" onClick={() => setArmed(false)}>
+          Cancel
+        </button>
+      )}
+      {message && <small role="alert">{message}</small>}
+    </span>
+  );
+}

@@ -1,24 +1,27 @@
-import {Footer} from '@/components/footer';
-﻿import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import "./directory.css";
-import { AppHeader } from "@/components/app-header";
-import { productConfig } from "@/lib/config/product";
+import { Footer } from '@/components/footer';
+import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import './globals.css';
+import './directory.css';
+import { AppHeader } from '@/components/app-header';
+import { productConfig } from '@/lib/config/product';
 
-const geist = Geist({ variable: "--font-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-mono", subsets: ["latin"] });
+const geist = Geist({ variable: '--font-sans', subsets: ['latin'] });
+const geistMono = Geist_Mono({ variable: '--font-mono', subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: `${productConfig.name} | Namma Startup`,
-  description: "Explore real companies, careers, and startup news across Chennai. Browse the map and help grow the directory.",
+  description:
+    'Explore real companies, careers, and startup news across Chennai. Browse the map and help grow the directory.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body className={`${geist.variable} ${geistMono.variable}`}>
-        <a className="skip-link" href="#main-content">Skip to content</a>
+        <a className="skip-link" href="#main-content">
+          Skip to content
+        </a>
         <AppHeader />
         {children}
         <Footer />
@@ -26,4 +29,3 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     </html>
   );
 }
-

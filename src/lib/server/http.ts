@@ -1,6 +1,43 @@
-import {limitedText} from '@/lib/ingestion/fetch-source';
-﻿import {database} from './repository';
-export function requireSameOrigin(request:Request){const origin=request.headers.get('origin');const allowed=new Set([new URL(request.url).origin]);if(process.env.NEXT_PUBLIC_APP_URL)allowed.add(new URL(process.env.NEXT_PUBLIC_APP_URL).origin);if(!origin||!allowed.has(origin))throw new Error('ORIGIN');}
-export async function readJson(request:Request){if(!request.headers.get('content-type')?.includes('application/json'))throw new Error('JSON');if(Number(request.headers.get('content-length')||0)>8192)throw new Error('SIZE');const text=await limitedText(new Response(request.body),8192);return JSON.parse(text);}
-export async function rateLimit(request:Request,scope:string,limit=8){const ip=request.headers.get('cf-connecting-ip')||'local';const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(ip)))).map(b=>b.toString(16).padStart(2,'0')).join('');const db=await database();const now=Date.now();const [row]=await db.all<{count:number}>('INSERT INTO rate_limits (key,count,expires) VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET count=CASE WHEN expires<? THEN 1 ELSE count+1 END,expires=CASE WHEN expires<? THEN excluded.expires ELSE expires END RETURNING count',[scope+':'+hash,now+3600000,now,now]);return row.count<=limit;}
-export function apiError(error:unknown){const code=error instanceof Error?error.message:'';return Response.json({error:code==='ORIGIN'?'Request origin was not accepted.':code==='SIZE'?'This submission is too large.':'Check the submitted fields and try again.'},{status:code==='ORIGIN'?403:400});}
+import { limitedText } from '@/lib/ingestion/fetch-source';
+import { database } from './repository';
+export function requireSameOrigin(request: Request) {
+  const origin = request.headers.get('origin');
+  const allowed = new Set([new URL(request.url).origin]);
+  if (process.env.NEXT_PUBLIC_APP_URL) allowed.add(new URL(process.env.NEXT_PUBLIC_APP_URL).origin);
+  if (!origin || !allowed.has(origin)) throw new Error('ORIGIN');
+}
+export async function readJson(request: Request) {
+  if (!request.headers.get('content-type')?.includes('application/json')) throw new Error('JSON');
+  if (Number(request.headers.get('content-length') || 0) > 8192) throw new Error('SIZE');
+  const text = await limitedText(new Response(request.body), 8192);
+  return JSON.parse(text);
+}
+export async function rateLimit(request: Request, scope: string, limit = 8) {
+  const ip = request.headers.get('cf-connecting-ip') || 'local';
+  const hash = Array.from(
+    new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ip))),
+  )
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  const db = await database();
+  const now = Date.now();
+  const [row] = await db.all<{ count: number }>(
+    'INSERT INTO rate_limits (key,count,expires) VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET count=CASE WHEN expires<? THEN 1 ELSE count+1 END,expires=CASE WHEN expires<? THEN excluded.expires ELSE expires END RETURNING count',
+    [scope + ':' + hash, now + 3600000, now, now],
+  );
+  return row.count <= limit;
+}
+export function apiError(error: unknown) {
+  const code = error instanceof Error ? error.message : '';
+  return Response.json(
+    {
+      error:
+        code === 'ORIGIN'
+          ? 'Request origin was not accepted.'
+          : code === 'SIZE'
+            ? 'This submission is too large.'
+            : 'Check the submitted fields and try again.',
+    },
+    { status: code === 'ORIGIN' ? 403 : 400 },
+  );
+}

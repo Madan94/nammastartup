@@ -1,5 +1,35 @@
-import {fetchSource} from './fetch-source';
-﻿import {database} from '@/lib/server/repository';
-import {jobSources,parseAgnikulJobs} from './jobs';
-export async function recordSync(source:string,at:string,count:number,error:string|null){const db=await database();await db.run('INSERT INTO sync_runs (source,attempted_at,success_at,error,item_count) VALUES (?,?,?,?,?) ON CONFLICT(source) DO UPDATE SET attempted_at=excluded.attempted_at,success_at=CASE WHEN excluded.error IS NULL THEN excluded.success_at ELSE sync_runs.success_at END,error=excluded.error,item_count=CASE WHEN excluded.error IS NULL THEN excluded.item_count ELSE sync_runs.item_count END',[source,at,error?null:at,error,count]);}
-export async function refreshJobs(){const db=await database();const reports=[];for(const source of jobSources){const at=new Date().toISOString();try{const html=await fetchSource(source.url);const jobs=parseAgnikulJobs(html,at);await db.batch([{sql:'UPDATE jobs SET active=0 WHERE company_slug=?',params:[source.companySlug]},...jobs.map(job=>({sql:'INSERT INTO jobs (id,company_slug,record,active,observed_at) VALUES (?,?,?,1,?) ON CONFLICT(id) DO UPDATE SET record=excluded.record,active=1,observed_at=excluded.observed_at',params:[job.id,job.companySlug,JSON.stringify(job),at]}))]);await recordSync(source.id,at,jobs.length,null);reports.push({source:source.id,count:jobs.length,ok:true});}catch(error){const message=error instanceof Error?error.message:'Source unavailable';await recordSync(source.id,at,0,message);reports.push({source:source.id,ok:false,error:message});}}return reports;}
+import { fetchSource } from './fetch-source';
+import { database } from '@/lib/server/repository';
+import { jobSources, parseAgnikulJobs } from './jobs';
+export async function recordSync(source: string, at: string, count: number, error: string | null) {
+  const db = await database();
+  await db.run(
+    'INSERT INTO sync_runs (source,attempted_at,success_at,error,item_count) VALUES (?,?,?,?,?) ON CONFLICT(source) DO UPDATE SET attempted_at=excluded.attempted_at,success_at=CASE WHEN excluded.error IS NULL THEN excluded.success_at ELSE sync_runs.success_at END,error=excluded.error,item_count=CASE WHEN excluded.error IS NULL THEN excluded.item_count ELSE sync_runs.item_count END',
+    [source, at, error ? null : at, error, count],
+  );
+}
+export async function refreshJobs() {
+  const db = await database();
+  const reports = [];
+  for (const source of jobSources) {
+    const at = new Date().toISOString();
+    try {
+      const html = await fetchSource(source.url);
+      const jobs = parseAgnikulJobs(html, at);
+      await db.batch([
+        { sql: 'UPDATE jobs SET active=0 WHERE company_slug=?', params: [source.companySlug] },
+        ...jobs.map((job) => ({
+          sql: 'INSERT INTO jobs (id,company_slug,record,active,observed_at) VALUES (?,?,?,1,?) ON CONFLICT(id) DO UPDATE SET record=excluded.record,active=1,observed_at=excluded.observed_at',
+          params: [job.id, job.companySlug, JSON.stringify(job), at],
+        })),
+      ]);
+      await recordSync(source.id, at, jobs.length, null);
+      reports.push({ source: source.id, count: jobs.length, ok: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Source unavailable';
+      await recordSync(source.id, at, 0, message);
+      reports.push({ source: source.id, ok: false, error: message });
+    }
+  }
+  return reports;
+}
