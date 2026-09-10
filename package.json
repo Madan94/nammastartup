@@ -13,6 +13,10 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "cheerio": "1.2.0",
+    "drizzle-orm": "0.45.1",
+    "fast-xml-parser": "5.11.1",
+    "leaflet": "1.9.4",
     "lucide-react": "latest",
     "next": "latest",
     "react": "latest",
@@ -20,12 +24,17 @@
     "zod": "latest"
   },
   "devDependencies": {
+    "@openai/sites-vite-plugin": "0.2.0",
+    "@types/leaflet": "1.9.20",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "drizzle-kit": "0.31.8",
     "eslint": "^9.0.0",
     "eslint-config-next": "latest",
     "typescript": "^5.9.0",
+    "vinext": "1.0.0-beta.9",
+    "vite": "8.2.2",
     "vitest": "latest"
   }
 }
