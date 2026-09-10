@@ -11,3 +11,4 @@ dist/
 .wrangler/
 .dev.vars
 .env.*.local
+next-env.d.ts

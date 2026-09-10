@@ -1,16 +1,4 @@
-import { NextResponse } from "next/server";
-import { z } from "zod";
-import { startups } from "@/data/demo/startups";
-import { parseSearchIntent, rankStartups } from "@/lib/domain/search";
-
-const RequestSchema = z.object({ query: z.string().trim().min(3).max(1000) });
-
-export async function POST(request: Request) {
-  try {
-    const { query } = RequestSchema.parse(await request.json());
-    const intent = parseSearchIntent(query);
-    return NextResponse.json({ intent, results: rankStartups(startups, intent), source: "deterministic-demo" });
-  } catch {
-    return NextResponse.json({ error: "Please enter a little more detail so we can search well." }, { status: 400 });
-  }
-}
+import {listCompanies,listJobs} from '@/lib/server/repository';
+import {filterCompanies} from '@/lib/catalog/filters';
+import {z} from 'zod';
+export async function POST(request:Request){try{const {query}=z.object({query:z.string().trim().min(1).max(150)}).parse(await request.json());const companies=filterCompanies(await listCompanies(),{query,sector:'',area:'',kind:'',hiring:false},(await listJobs()).map(j=>j.companySlug));return Response.json({companies,count:companies.length,source:'verified-directory'});}catch{return Response.json({error:'Enter a search between 1 and 150 characters.'},{status:400})}}
