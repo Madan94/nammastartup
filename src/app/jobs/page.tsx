@@ -1,3 +1,4 @@
-import Link from "next/link";
-import { BriefcaseBusiness, ArrowRight } from "lucide-react";
-export default function JobsPage() { return <main className="placeholder-page"><BriefcaseBusiness/><span className="kicker">Opportunity index</span><h1>Jobs, ranked around you.</h1><p>The complete filtered jobs workspace is queued for the next build increment. Today, matching roles are live inside AI Search and company profiles.</p><Link href="/search">Search matching roles <ArrowRight size={16}/></Link></main>; }
+﻿import {listJobs,listCompanies} from '@/lib/server/repository';
+import {JobsList} from '@/features/jobs/jobs-list';
+export const dynamic='force-dynamic';
+export default async function JobsPage(){const [jobs,companies]=await Promise.all([listJobs(),listCompanies()]);return <main id="main-content" className="page-wrap"><span className="eyebrow">Your next chapter, in Chennai</span><h1>Build something that matters.</h1><p className="lead">Explore roles listed on official company careers pages. Apply directly with the company. Availability can change after our last check.</p><JobsList jobs={jobs} companies={companies}/></main>}
