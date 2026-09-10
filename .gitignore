@@ -6,3 +6,8 @@ coverage/
 .env.local
 *.log
 *.tsbuildinfo
+.data/
+dist/
+.wrangler/
+.dev.vars
+.env.*.local
