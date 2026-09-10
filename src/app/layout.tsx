@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./directory.css";
 import { AppHeader } from "@/components/app-header";
 import { productConfig } from "@/lib/config/product";
 
@@ -22,3 +23,4 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     </html>
   );
 }
+
