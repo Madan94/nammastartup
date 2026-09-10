@@ -1,3 +1,4 @@
+import {Footer} from '@/components/footer';
 ﻿import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -17,8 +18,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body className={`${geist.variable} ${geistMono.variable}`}>
+        <a className="skip-link" href="#main-content">Skip to content</a>
         <AppHeader />
         {children}
+        <Footer />
       </body>
     </html>
   );
